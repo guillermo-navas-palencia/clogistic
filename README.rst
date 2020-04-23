@@ -182,7 +182,7 @@ Elastic-Net with bounds and constraints
    0.9578207381370826
 
 We require to impose bounds and a linear constraint, for example, ``-coef_[0] + coef_[1] <= 0.5``.
-The constraint has the general inequality form: :math:`lb \le A^Tx \le ub`.
+The constraint has the general inequality form: ``lb <= A^Tx <= ub``.
 
 .. code-block:: python
 
