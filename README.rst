@@ -5,12 +5,12 @@ clogistic
 Logistic regression with bound and linear constraints. L1, L2, SOS and Elastic-Net regularization.
 
 
-This is a Python implementation based on the constrained logistic regression with a scikit-learn like API. This library uses `CVXPY <https://github.com/cvxgrp/cvxpy>`_ and scipy optimizer `L-BFGS-B <https://docs.scipy.org/doc/scipy/reference/optimize.minimize-lbfgsb.html>`_.
+This is a Python implementation of the constrained logistic regression with a scikit-learn like API. This library uses `CVXPY <https://github.com/cvxgrp/cvxpy>`_ and scipy optimizer `L-BFGS-B <https://docs.scipy.org/doc/scipy/reference/optimize.minimize-lbfgsb.html>`_. Currently, only binary classification is supported.
 
 Installation
 ============
 
-To install the current release of clogistic:
+To install the current release of clogistic from PyPI:
 
 .. code-block:: text
 
@@ -35,3 +35,36 @@ Dependencies
 
 Examples
 ========
+
+clogistic can replace the scikit-learn LogisticRegression import:
+
+..code-bloc:: python
+   
+   # from sklearn.linear_models import LogisticRegression
+   from clogistic import LogisticRegression
+
+
+L1-norm
+-------
+
+L1-norm with bounds
+-------------------
+
+L2-norm with bounds
+-------------------
+
+SOS
+---
+
+SOS with bounds
+--------------------
+
+Elastic-Net with bounds and constraints
+---------------------------------------
+
+
+Methods
+=======
+
+`scikit-learn.linear_models.LogisticRegression API <https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html>`_.
+

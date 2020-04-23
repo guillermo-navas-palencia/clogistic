@@ -365,8 +365,8 @@ def _fit_ecos(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
     return coef_, intercept_
 
 
-class ConstrainedLogisticRegression(BaseEstimator, LinearClassifierMixin,
-                                    SparseCoefMixin):
+class LogisticRegression(BaseEstimator, LinearClassifierMixin,
+                         SparseCoefMixin):
     """
     Constrained Logistic Regression (aka logit, MaxEnt) classifier.
 
