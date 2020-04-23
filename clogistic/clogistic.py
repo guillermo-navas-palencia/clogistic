@@ -36,7 +36,8 @@ def _check_parameters(penalty, tol, C, fit_intercept, class_weight, solver,
                       max_iter, l1_ratio, warm_start, verbose):
 
     if penalty not in ("l1", "l2", "elasticnet", "sos", None):
-        raise ValueError("")
+        raise ValueError('Invalid value for penalty. Supported penalties are '
+                         '"l1", "l2", "elasticnet", "sos" and None.')
 
     if penalty == "elasticnet":
         if (not isinstance(l1_ratio, numbers.Number) or
@@ -79,17 +80,22 @@ def _check_parameters(penalty, tol, C, fit_intercept, class_weight, solver,
         raise TypeError("verbose must be a bool; got {}.".format(verbose))
 
 
-def _check_solver(solver, constraints):
-    if solver == "lbfgs" and constraints is not None:
-        raise ValueError('Only "ecos" solver supports linear constraints.')
+def _check_solver(solver, penalty, bounds, constraints):
+    if solver == "lbfgs":
+        if penalty in ("l1", "elasticnet") and bounds is not None:
+            raise ValueError('Solver "lbfgs" does not support bound '
+                             'constraints with penalty "l1" and '
+                             '"elasticnet"; choose "ecos" solver.')
+
+        if constraints is not None:
+            raise ValueError('Only "ecos" solver supports linear constraints.')
 
 
 def _check_X_y(X, y):
     if type_of_target(y) != "binary":
-        raise ValueError("")
+        raise ValueError("This solver needs a binary target.")
 
     classes = np.unique(y)
-
     if len(classes) < 2:
         raise ValueError("This solver needs samples of 2 classes"
                          " in the data, but the data contains only one"
@@ -101,28 +107,31 @@ def _check_X_y(X, y):
 
 def _check_bounds(bounds, n, fit_intercept):
     if not isinstance(bounds, Bounds):
-        raise TypeError("")
+        raise TypeError("bounds is not of type scipy.optimize.Bounds.")
 
     lb = bounds.lb
     ub = bounds.ub
     check_consistent_length(lb, ub)
 
     if n + int(fit_intercept) != len(lb):
-        raise ValueError("")
+        raise ValueError("Length of lower bounds is incorrect; got {} and "
+                         "must be {}.".format(len(lb), n + int(fit_intercept)))
 
 
 def _check_constraints(constraints, n, fit_intercept):
     if not isinstance(constraints, LinearConstraint):
-        raise TypeError("")
+        raise TypeError("constraints is not of type "
+                        "scipy.optimize.LinearConstraint.")
 
     A = constraints.A
     lb = constraints.lb
     ub = constraints.ub
-
     check_consistent_length(lb, ub)
 
     if n + int(fit_intercept) != A.shape[1]:
-        raise ValueError("")
+        raise ValueError("Number of columns of matrix A is incorrect; got {} "
+                         "and must be {}.".format(A.shape[1],
+                                                  n + int(fit_intercept)))
 
     check_consistent_length(A, lb)
 
@@ -198,7 +207,6 @@ def _logistic_loss_and_grad(w, X, y, alpha, penalty, fit_intercept,
     if sample_weight is None:
         sample_weight = np.ones(n_samples)
 
-    # Logistic loss is the negative of the log of the logistic function.
     if penalty == "sos":
         reg = .5 * alpha * np.dot(w, w)
         reg_grad = alpha * w
@@ -217,7 +225,6 @@ def _logistic_loss_and_grad(w, X, y, alpha, penalty, fit_intercept,
 
     grad[:n_features] = safe_sparse_dot(X.T, z0) + reg_grad
 
-    # Case where we fit the intercept.
     if fit_intercept:
         grad[-1] = z0.sum()
     return out, grad
@@ -236,11 +243,7 @@ def _fit_lbfgs(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
     if penalty in ("l1", "elasticnet"):
         func = _logistic_l1_loss_and_grad
         w0 = np.zeros(2 * n + int(fit_intercept))
-
-        bounds = [(0, np.inf)] * n * 2
-        if fit_intercept:
-            bounds += [(-np.inf, np.inf)]
-
+        bounds = [(0, np.inf)] * n*2 + [(-np.inf, np.inf)] * int(fit_intercept)
         args = (X, y_bin, 1. / C, penalty, fit_intercept, l1_ratio,
                 sample_weight)
     else:
@@ -279,7 +282,7 @@ def _fit_ecos(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
 
     m, n = X.shape
 
-    # Objective function
+    # Decision variables
     if fit_intercept:
         nn = n + 1
         beta = cp.Variable(nn)
@@ -289,6 +292,7 @@ def _fit_ecos(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
         beta = cp.Variable(nn)
         Xbeta = X @ beta
 
+    # Objective function
     log_likelihood = C * cp.sum(
         sample_weight * (cp.multiply(y, Xbeta) - cp.logistic(Xbeta)))
 
@@ -494,7 +498,7 @@ class ConstrainedLogisticRegression(BaseEstimator, LinearClassifierMixin,
         """
         _check_parameters(**self.get_params())
 
-        _check_solver(self.solver, constraints)
+        _check_solver(self.solver, self.penalty, bounds, constraints)
 
         X, y, self.classes_ = _check_X_y(X, y)
 
