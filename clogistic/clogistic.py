@@ -1,9 +1,17 @@
 """
 Constrained Logistic Regression.
+
+
+Implementation based on scikit-learn Logistic Regression.
+
+    sklearn.linear_model.LogisticRegression
 """
 
 # Guillermo Navas-Palencia <g.navas.palencia@gmail.com>
 # Copyright (C) 2020
+
+import numbers
+import warnings
 
 import cvxpy as cp
 import numpy as np
@@ -26,16 +34,54 @@ from sklearn.utils.validation import _check_sample_weight
 
 def _check_parameters(penalty, tol, C, fit_intercept, class_weight, solver,
                       max_iter, l1_ratio, warm_start, verbose):
-    pass
+
+    if penalty not in ("l1", "l2", "elasticnet", "sos", None):
+        raise ValueError("")
+
+    if penalty == "elasticnet":
+        if (not isinstance(l1_ratio, numbers.Number) or
+                not 0 <= l1_ratio <= 1):
+            raise ValueError("l1_ratio must be between 0 and 1; got {}."
+                             .format(l1_ratio))
+    elif l1_ratio is not None:
+        warnings.warn("l1_ratio parameter is only used when penalty is "
+                      "'elasticnet'; got penalty={}.".format(penalty))
+
+    if not isinstance(tol, numbers.Number) or tol < 0:
+        raise ValueError("tol parameter for stopping criteria must be "
+                         "positive; got {}.".format(tol))
+
+    if not isinstance(fit_intercept, bool):
+        raise TypeError("fit_intercept must be a bool; got {}."
+                        .format(fit_intercept))
+
+    if class_weight is not None:
+        if not isinstance(class_weight, (dict, str)):
+            raise TypeError('class_weight must be dict, "balanced" or None; '
+                            'got {}.'.format(class_weight))
+
+        elif isinstance(class_weight, str) and class_weight != "balanced":
+            raise ValueError('Invalid value for class_weight. Allowed string '
+                             'value is "balanced".')
+
+    if solver not in ("ecos", "lbfgs"):
+        raise ValueError('Invalid value for solver. Allowed string '
+                         'values are "ecos" and "lbfgs".')
+
+    if not isinstance(max_iter, numbers.Number) or max_iter < 0:
+        raise ValueError("max_iter must be positive; got {}.".format(max_iter))
+
+    if not isinstance(warm_start, bool):
+        raise TypeError("warm_start must be a bool; got {}."
+                        .format(warm_start))
+
+    if not isinstance(verbose, bool):
+        raise TypeError("verbose must be a bool; got {}.".format(verbose))
 
 
-def _check_solver(solver, penalty, bounds, constraints):
-    if solver == "lbfgs":
-        if penalty in ("l1", "elasticnet"):
-            raise ValueError("")
-
-        if constraints is not None:
-            raise ValueError("")
+def _check_solver(solver, constraints):
+    if solver == "lbfgs" and constraints is not None:
+        raise ValueError('Only "ecos" solver supports linear constraints.')
 
 
 def _check_X_y(X, y):
@@ -60,12 +106,15 @@ def _check_bounds(bounds, n, fit_intercept):
     lb = bounds.lb
     ub = bounds.ub
     check_consistent_length(lb, ub)
-    
+
     if n + int(fit_intercept) != len(lb):
         raise ValueError("")
 
 
 def _check_constraints(constraints, n, fit_intercept):
+    if not isinstance(constraints, LinearConstraint):
+        raise TypeError("")
+
     A = constraints.A
     lb = constraints.lb
     ub = constraints.ub
@@ -80,7 +129,7 @@ def _check_constraints(constraints, n, fit_intercept):
 
 def _logistic_l1_loss_and_grad(w2, X, y, alpha, penalty, fit_intercept,
                                l1_ratio, sample_weight=None):
-    
+
     n_samples, n_features = X.shape
 
     grad = np.empty_like(w2)
@@ -107,7 +156,7 @@ def _logistic_l1_loss_and_grad(w2, X, y, alpha, penalty, fit_intercept,
     elif penalty == "elasticnet":
         regl2 = 0.5 * (1 - l1_ratio) * alpha * np.dot(w, w)
         regl1 = l1_ratio * alpha * t.sum()
-        reg = regl2 + regl1   
+        reg = regl2 + regl1
         rg1 = alpha * l1_ratio
         rg2 = alpha * (1 - l1_ratio) * w
         reg_grad[:2*n_features] = np.concatenate([rg2, -rg2]) + rg1
@@ -157,6 +206,9 @@ def _logistic_loss_and_grad(w, X, y, alpha, penalty, fit_intercept,
         w_norm = np.linalg.norm(w)
         reg = alpha * w_norm
         reg_grad = alpha * w / w_norm if w.sum() else 0
+    else:
+        reg = 0
+        reg_grad = 0
 
     out = -np.sum(sample_weight * log_logistic(yz)) + reg
 
@@ -211,7 +263,6 @@ def _fit_lbfgs(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
             coef_ = res.x[:n] - res.x[n:-1]
         else:
             coef_ = res.x[:-1]
-        
     else:
         intercept_ = 0
         if penalty in ("l1", "elasticnet"):
@@ -223,8 +274,8 @@ def _fit_lbfgs(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
 
 
 def _fit_ecos(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
-               warm_start_coef, verbose, X, y, sample_weight=None, bounds=None,
-               constraints=None):
+              warm_start_coef, verbose, X, y, sample_weight=None, bounds=None,
+              constraints=None):
 
     m, n = X.shape
 
@@ -311,13 +362,13 @@ def _fit_ecos(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
 
 
 class ConstrainedLogisticRegression(BaseEstimator, LinearClassifierMixin,
-                         SparseCoefMixin):
+                                    SparseCoefMixin):
     """
     Constrained Logistic Regression (aka logit, MaxEnt) classifier.
 
-    This class implements regularized logistic regression supported bound 
+    This class implements regularized logistic regression supported bound
     and linear constraints using the 'ecos' and 'lbfgs' solvers.
-    
+
     All solvers support only L1, L2, SOS and Elastic-Net regularization or no
     regularization. The 'lbfgs' solver supports bound constraints for both L2
     and SOS regularization. The 'ecos' solver supports bound constraints and
@@ -349,7 +400,7 @@ class ConstrainedLogisticRegression(BaseEstimator, LinearClassifierMixin,
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``.
-        
+
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
@@ -396,14 +447,14 @@ class ConstrainedLogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     L-BFGS-B -- Software for Large-scale Bound-constrained Optimization
         Ciyou Zhu, Richard Byrd, Jorge Nocedal and Jose Luis Morales.
-        http://users.iems.northwestern.edu/~nocedal/lbfgsb.html        
+        http://users.iems.northwestern.edu/~nocedal/lbfgsb.html
     """
     def __init__(self, penalty="l2", tol=1e-4, C=1.0, fit_intercept=True,
                  class_weight=None, solver="ecos", max_iter=100, l1_ratio=None,
                  warm_start=False, verbose=False):
-        
+
         self.penalty = penalty
-        self.tol=tol
+        self.tol = tol
         self.C = C
         self.fit_intercept = fit_intercept
         self.class_weight = class_weight
@@ -416,24 +467,26 @@ class ConstrainedLogisticRegression(BaseEstimator, LinearClassifierMixin,
     def fit(self, X, y, sample_weight=None, bounds=None, constraints=None):
         """
         Fit the model according to the given training data.
-        
+
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
-        
+
         y : array-like of shape (n_samples,)
             Target vector relative to X.
-        
+
         sample_weight : array-like of shape (n_samples,) default=None
             Array of weights that are assigned to individual samples.
             If not provided, then each sample is given unit weight.
 
         bounds : scipy.optimize.Bounds or None, default None
+            Bounds on the coefficients and intercept.
 
         constraints : scipy.optimize.LinearConstraint or None, default None
-        
+            Linear constraints on the coefficients and intercept.
+
         Returns
         -------
         self
@@ -441,7 +494,7 @@ class ConstrainedLogisticRegression(BaseEstimator, LinearClassifierMixin,
         """
         _check_parameters(**self.get_params())
 
-        _check_solver(self.solver, self.penalty, bounds, constraints)
+        _check_solver(self.solver, constraints)
 
         X, y, self.classes_ = _check_X_y(X, y)
 
@@ -493,45 +546,45 @@ class ConstrainedLogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         The returned estimates for all classes are ordered by the
         label of classes.
-        
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             Vector to be scored, where `n_samples` is the number of samples and
             `n_features` is the number of features.
-        
+
         Returns
         -------
         T : array-like of shape (n_samples, n_classes)
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in ``self.classes_``.
-        """        
+        """
         check_is_fitted(self)
 
         proba = np.empty((X.shape[0], 2))
-        p1 = expit(-self.decision_function(X))
-        proba[:, 0] = p1
-        proba[:, 1] = 1 - p1
+        p0 = expit(-self.decision_function(X))
+        proba[:, 0] = p0
+        proba[:, 1] = 1 - p0
 
         return proba
 
     def predict_log_proba(self, X):
         """
         Predict logarithm of probability estimates.
-        
+
         The returned estimates for all classes are ordered by the
         label of classes.
-        
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             Vector to be scored, where `n_samples` is the number of samples and
             `n_features` is the number of features.
-        
+
         Returns
         -------
         T : array-like of shape (n_samples, n_classes)
             Returns the log-probability of the sample for each class in the
             model, where classes are ordered as they are in ``self.classes_``.
-        """        
+        """
         return np.log(self.predict_proba(X))
