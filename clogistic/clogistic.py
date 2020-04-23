@@ -35,9 +35,9 @@ from sklearn.utils.validation import _check_sample_weight
 def _check_parameters(penalty, tol, C, fit_intercept, class_weight, solver,
                       max_iter, l1_ratio, warm_start, verbose):
 
-    if penalty not in ("l1", "l2", "elasticnet", "sos", None):
+    if penalty not in ("l1", "l2", "elasticnet", "none"):
         raise ValueError('Invalid value for penalty. Supported penalties are '
-                         '"l1", "l2", "elasticnet", "sos" and None.')
+                         '"l1", "l2", "elasticnet" and "none".')
 
     if penalty == "elasticnet":
         if (not isinstance(l1_ratio, numbers.Number) or
@@ -207,13 +207,9 @@ def _logistic_loss_and_grad(w, X, y, alpha, penalty, fit_intercept,
     if sample_weight is None:
         sample_weight = np.ones(n_samples)
 
-    if penalty == "sos":
+    if penalty == "l2":
         reg = .5 * alpha * np.dot(w, w)
         reg_grad = alpha * w
-    elif penalty == "l2":
-        w_norm = np.linalg.norm(w)
-        reg = alpha * w_norm
-        reg_grad = alpha * w / w_norm if w.sum() else 0
     else:
         reg = 0
         reg_grad = 0
@@ -335,13 +331,11 @@ def _fit_ecos(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
     if penalty == "l1":
         penalty = cp.norm(w, 1)
     elif penalty == "l2":
-        penalty = cp.norm(w, 2)
+        penalty = 0.5 * cp.sum_squares(w)
     elif penalty == "elasticnet":
         penaltyl2 = 0.5 * (1 - l1_ratio) * cp.sum_squares(w)
         penaltyl1 = l1_ratio * cp.norm(w, 1)
         penalty = penaltyl2 + penaltyl1
-    elif penalty == "sos":
-        penalty = 0.5 * cp.sum_squares(w)
     else:
         penalty = 0
 
@@ -373,17 +367,17 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     This class implements regularized logistic regression supported bound
     and linear constraints using the 'ecos' and 'lbfgs' solvers.
 
-    All solvers support only L1, L2, SOS and Elastic-Net regularization or no
-    regularization. The 'lbfgs' solver supports bound constraints for both L2
-    and SOS regularization. The 'ecos' solver supports bound constraints and
-    linear constraints for all regularizations.
+    All solvers support only L1, L2 and Elastic-Net regularization or no
+    regularization. The 'lbfgs' solver supports bound constraints for L2
+    regularization. The 'ecos' solver supports bound constraints and linear
+    constraints for all regularizations.
 
     Parameters
     ----------
-    penalty : {'l1', 'l2', 'elasticnet', 'sos', None}, default='l2'
+    penalty : {'l1', 'l2', 'elasticnet', 'none'}, default='l2'
         Used to specify the norm used in the penalization. The 'lbfgs',
-        solver supports only 'sos' and 'l2' penalties if bounds are provided.
-        If None, no regularization is applied.
+        solver supports only 'l2' penalties if bounds are provided.
+        If 'none', no regularization is applied.
 
     tol : float, default=1e-4
         Tolerance for stopping criteria.
@@ -412,10 +406,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Algorithm/solver to use in the optimization problem.
 
         - Unconstrained 'lbfgs' handles all regularizations.
-        - Bound constrainted 'lbfgs' handles L2 and SOS or no penalty.
+        - Bound constrainted 'lbfgs' handles L2 or no penalty.
         - For other cases, use 'ecos'.
 
-        Note that 'ecos' uses the general-purpose solver ECOS via cvxpy.
+        Note that 'ecos' uses the general-purpose solver ECOS via CVXPY.
 
     max_iter : int, default=100
         Maximum number of iterations taken for the solvers to converge.
@@ -423,9 +417,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     l1_ratio : float, default=None
         The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
         used if ``penalty='elasticnet'`. Setting ``l1_ratio=0`` is equivalent
-        to using ``penalty='sos'``, while setting ``l1_ratio=1`` is equivalent
+        to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
-        combination of L1 and SOS.
+        combination of L1 and L2.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
