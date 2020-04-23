@@ -38,7 +38,7 @@ Examples
 
 clogistic can replace the scikit-learn LogisticRegression import:
 
-..code-bloc:: python
+.. code-bloc:: python
    
    # from sklearn.linear_models import LogisticRegression
    from clogistic import LogisticRegression
