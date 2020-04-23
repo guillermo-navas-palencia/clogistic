@@ -36,7 +36,7 @@ Dependencies
 Examples
 ========
 
-clogistic can flawlessly replace the scikit-learn LogisticRegression import when constraints are required:
+clogistic can flawlessly replace the scikit-learn LogisticRegression import when bounds or linear constraints are required:
 
 .. code-block:: python
    
@@ -178,9 +178,11 @@ Elastic-Net with bounds and constraints
            -2.41172826e-01, -5.15782954e-01, -1.16567422e-08]])
    >>> clf.intercept_
    array([28.2732499])
+   >>> clf.score(X, y)
+   0.9578207381370826
 
 We require to impose bounds and a linear constraint, for example, ``-coef_[0] + coef_[1] <= 0.5``.
-The constraint has the general inequality form: lb <= A^Tx <= ub.
+The constraint has the general inequality form: :math:`lb \le A^Tx \le ub`.
 
 .. code-block:: python
 
@@ -207,9 +209,9 @@ The constraint has the general inequality form: lb <= A^Tx <= ub.
            -6.39569062e-01, -9.99999975e-01, -9.99999982e-01,
            -9.99999849e-01, -9.99999935e-01, -3.52251357e-06]])
    >>> clf.intercept_
-   array([28.2732499])
+   array([28.38190371])
    >>> clf.score(X, y)
-   0.9578207381370826
+   0.9543057996485061
 
 
 Methods
