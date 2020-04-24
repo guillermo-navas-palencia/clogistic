@@ -212,10 +212,3 @@ The constraint has the general inequality form: ``lb <= A^Tx <= ub``.
    array([28.38190371])
    >>> clf.score(X, y)
    0.9543057996485061
-
-
-Methods
-=======
-
-`scikit-learn.linear_models.LogisticRegression API <https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html>`_.
-
