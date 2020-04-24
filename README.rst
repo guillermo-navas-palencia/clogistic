@@ -2,6 +2,12 @@
 clogistic
 =========
 
+.. image::  https://travis-ci.com/guillermo-navas-palencia/clogistic.svg?branch=master
+   :target: https://travis-ci.com/guillermo-navas-palencia/clogistic
+
+.. image::  https://codecov.io/gh/guillermo-navas-palencia/clogistic/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/guillermo-navas-palencia/clogistic
+
 Logistic regression with bound and linear constraints. L1, L2 and Elastic-Net regularization.
 
 
