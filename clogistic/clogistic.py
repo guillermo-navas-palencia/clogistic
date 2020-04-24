@@ -137,7 +137,7 @@ def _check_constraints(constraints, n, fit_intercept):
 
 
 def _logistic_l1_loss_and_grad(w2, X, y, alpha, penalty, fit_intercept,
-                               l1_ratio, sample_weight=None):
+                               l1_ratio, sample_weight):
 
     n_samples, n_features = X.shape
 
@@ -155,9 +155,6 @@ def _logistic_l1_loss_and_grad(w2, X, y, alpha, penalty, fit_intercept,
 
     z = safe_sparse_dot(X, w) + c
     yz = y * z
-
-    if sample_weight is None:
-        sample_weight = np.ones(n_samples)
 
     if penalty == "l1":
         reg = alpha * t.sum()
@@ -191,7 +188,7 @@ def _logistic_l1_loss_and_grad(w2, X, y, alpha, penalty, fit_intercept,
 
 
 def _logistic_loss_and_grad(w, X, y, alpha, penalty, fit_intercept,
-                            sample_weight=None):
+                            sample_weight):
 
     n_samples, n_features = X.shape
     grad = np.empty_like(w)
@@ -203,9 +200,6 @@ def _logistic_loss_and_grad(w, X, y, alpha, penalty, fit_intercept,
 
     z = safe_sparse_dot(X, w) + c
     yz = y * z
-
-    if sample_weight is None:
-        sample_weight = np.ones(n_samples)
 
     if penalty == "l2":
         reg = .5 * alpha * np.dot(w, w)
@@ -227,8 +221,7 @@ def _logistic_loss_and_grad(w, X, y, alpha, penalty, fit_intercept,
 
 
 def _fit_lbfgs(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
-               warm_start_coef, verbose, X, y, sample_weight=None,
-               bounds=None):
+               warm_start_coef, verbose, X, y, sample_weight, bounds=None):
 
     m, n = X.shape
 
@@ -273,7 +266,7 @@ def _fit_lbfgs(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
 
 
 def _fit_ecos(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
-              warm_start_coef, verbose, X, y, sample_weight=None, bounds=None,
+              warm_start_coef, verbose, X, y, sample_weight, bounds=None,
               constraints=None):
 
     m, n = X.shape
