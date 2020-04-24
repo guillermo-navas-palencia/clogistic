@@ -18,7 +18,7 @@ Elastic-Net regularization.
 # install requirements
 install_requires = [
     'cvxpy>=1.0.31',
-    'numpy',
+    'numpy>=1.16',
     'scipy',
     'scikit-learn>=0.20.0'
 ]
