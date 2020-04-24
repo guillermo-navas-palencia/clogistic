@@ -5,7 +5,7 @@ clogistic
 Logistic regression with bound and linear constraints. L1, L2 and Elastic-Net regularization.
 
 
-This is a Python implementation of the constrained logistic regression with a scikit-learn like API. This library uses `CVXPY <https://github.com/cvxgrp/cvxpy>`_ and scipy optimizer `L-BFGS-B <https://docs.scipy.org/doc/scipy/reference/optimize.minimize-lbfgsb.html>`_. Currently, only binary classification is supported.
+This is a Python implementation of the constrained logistic regression with a scikit-learn like API. This library uses `CVXPY <https://github.com/cvxgrp/cvxpy>`_ and scipy optimizer `L-BFGS-B <https://docs.scipy.org/doc/scipy/reference/optimize.minimize-lbfgsb.html>`_. Currently, only **binary** classification is supported.
 
 Installation
 ============
@@ -129,7 +129,7 @@ in this case, it is unconstrained.
 L2-norm with bounds
 -------------------
 
-If we choose ``penalty="l2"`` or "none", the L-BFGS-B solver can handle bound constraints.
+If we choose ``penalty="l2"`` or ``penalty="none"``, the L-BFGS-B solver can handle bound constraints.
 
 .. code-block:: python
 
@@ -138,7 +138,7 @@ If we choose ``penalty="l2"`` or "none", the L-BFGS-B solver can handle bound co
    LogisticRegression(C=1.0, class_weight=None, fit_intercept=True, l1_ratio=None,
                       max_iter=100, penalty='l2', solver='lbfgs', tol=0.0001,
                       verbose=False, warm_start=False)
-   >>> clf.score(X, y)
+   >>> clf.score(X, y, bounds=bounds)
    0.9507908611599297
    >>> clf.coef_
    array([[ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
@@ -157,6 +157,9 @@ If we choose ``penalty="l2"`` or "none", the L-BFGS-B solver can handle bound co
 
 Elastic-Net with bounds and constraints
 ---------------------------------------
+
+If ``solver="ecos"``, linear constraints are supported. First, we solver the
+unconstrained problem:
 
 .. code-block:: python
 
@@ -181,7 +184,7 @@ Elastic-Net with bounds and constraints
    >>> clf.score(X, y)
    0.9578207381370826
 
-We require to impose bounds and a linear constraint, for example, ``-coef_[0] + coef_[1] <= 0.5``.
+Now, we require to impose bounds and a linear constraint, for example, ``-coef_[0] + coef_[1] <= 0.5``.
 The constraint has the general inequality form: ``lb <= A^Tx <= ub``.
 
 .. code-block:: python
@@ -190,7 +193,7 @@ The constraint has the general inequality form: ``lb <= A^Tx <= ub``.
    >>> lb = np.array([0.0])
    >>> ub = np.array([0.5])
    >>> A = np.zeros((1, X.shape[1] + 1))
-   >>> A[0,:2] = np.array([-1, 1])
+   >>> A[0, :2] = np.array([-1, 1])
    >>> A
    array([[-1.,  1.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,
             0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,

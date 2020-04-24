@@ -80,7 +80,7 @@ def _check_parameters(penalty, tol, C, fit_intercept, class_weight, solver,
         raise TypeError("verbose must be a bool; got {}.".format(verbose))
 
 
-def _check_solver(solver, penalty, bounds, constraints):
+def _check_solver(solver, penalty, bounds, constraints, warm_start):
     if solver == "lbfgs":
         if penalty in ("l1", "elasticnet") and bounds is not None:
             raise ValueError('Solver "lbfgs" does not support bound '
@@ -89,6 +89,10 @@ def _check_solver(solver, penalty, bounds, constraints):
 
         if constraints is not None:
             raise ValueError('Only "ecos" solver supports linear constraints.')
+
+        if penalty in ("l1", "elasticnet") and warm_start:
+            raise ValueError('Solver "lbfgs" does not support warm start with '
+                             '"l1" and "elasticnet" regularization.')
 
 
 def _check_X_y(X, y):
@@ -485,7 +489,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         """
         _check_parameters(**self.get_params())
 
-        _check_solver(self.solver, self.penalty, bounds, constraints)
+        _check_solver(self.solver, self.penalty, bounds, constraints,
+                      self.warm_start)
 
         X, y, self.classes_ = _check_X_y(X, y)
 
