@@ -28,7 +28,7 @@ setup(
     name='clogistic',
     version='0.1.0',
     description=description,
-    long_description=read('README.rst'),
+    long_description=description,
     author="Guillermo Navas-Palencia",
     author_email="g.navas.palencia@gmail.com",
     url="https://github.com/guillermo-navas-palencia/clogistic",
