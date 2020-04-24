@@ -1,9 +1,18 @@
+# Guillermo Navas-Palencia <g.navas.palencia@gmail.com>
+# Copyright (C) 2020
+
 import os
 from setuptools import setup
 
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
+
+description = '''
+Logistic regression with bound and linear constraints. L1, L2, SOS and
+Elastic-Net regularization.
+'''
 
 
 # install requirements
@@ -13,12 +22,6 @@ install_requires = [
     'scipy',
     'scikit-learn>=0.20.0'
 ]
-
-
-description = '''
-Logistic regression with bound and linear constraints. L1, L2, SOS and
-Elastic-Net regularization.
-'''
 
 
 setup(
