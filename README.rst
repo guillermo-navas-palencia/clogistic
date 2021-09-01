@@ -8,6 +8,9 @@ clogistic
 .. image::  https://codecov.io/gh/guillermo-navas-palencia/clogistic/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/guillermo-navas-palencia/clogistic
 
+.. image:: https://img.shields.io/pypi/v/clogistic?color=blue
+   :target: https://img.shields.io/pypi/v/clogistic?color=blue
+
 Logistic regression with bound and linear constraints. L1, L2 and Elastic-Net regularization.
 
 
