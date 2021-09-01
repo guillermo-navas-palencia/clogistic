@@ -9,8 +9,8 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-description = '''
-Logistic regression with bound and linear constraints. L1, L2, SOS and
+long_description = '''
+Logistic regression with bound and linear constraints. L1, L2 and
 Elastic-Net regularization.
 '''
 
@@ -27,8 +27,8 @@ install_requires = [
 setup(
     name='clogistic',
     version='0.1.0',
-    description=description,
-    long_description=description,
+    description="Constrained Logistic Regression",
+    long_description=long_description,
     author="Guillermo Navas-Palencia",
     author_email="g.navas.palencia@gmail.com",
     url="https://github.com/guillermo-navas-palencia/clogistic",
