@@ -286,8 +286,8 @@ def _fit_ecos(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
         Xbeta = X @ beta
 
     # Objective function
-    log_likelihood = C * cp.sum(
-        sample_weight * (cp.multiply(y, Xbeta) - cp.logistic(Xbeta)))
+    log_likelihood = C * sample_weight @ (
+        cp.multiply(y, Xbeta) - cp.logistic(Xbeta))
 
     # Bounds
     cons = []
@@ -507,8 +507,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         if self.class_weight is not None:
             le = LabelEncoder()
-            class_weight_ = compute_class_weight(self.class_weight,
-                                                 self.classes_, y)
+            class_weight_ = compute_class_weight(
+                class_weight=self.class_weight, classes=self.classes_, y=y)
             sample_weight *= class_weight_[le.fit_transform(y)]
 
         if self.warm_start:
