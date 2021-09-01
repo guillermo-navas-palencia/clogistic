@@ -164,7 +164,7 @@ If we choose ``penalty="l2"`` or ``penalty="none"``, the L-BFGS-B solver can han
 Elastic-Net with bounds and constraints
 ---------------------------------------
 
-If ``solver="ecos"``, linear constraints are supported. First, we solver the
+If ``solver="ecos"``, linear constraints are supported. First, we solve the
 unconstrained problem:
 
 .. code-block:: python
@@ -204,6 +204,7 @@ The constraint has the general inequality form: ``lb <= A^Tx <= ub``.
    array([[-1.,  1.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,
             0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,
             0.,  0.,  0.,  0.,  0.]])
+   >>> constraints = LinearConstraint(A, lb, ub)
    >>> clf = LogisticRegression(solver="ecos", penalty="elasticnet", l1_ratio=0.5)
    >>> clf.fit(X, y, bounds=bounds, constraints=constraints)
    >>> clf.coef_
