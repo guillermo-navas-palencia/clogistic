@@ -11,6 +11,9 @@ clogistic
 .. image:: https://img.shields.io/pypi/v/clogistic?color=blue
    :target: https://img.shields.io/pypi/v/clogistic?color=blue
 
+.. image:: https://pepy.tech/badge/clogistic
+   :target: https://pepy.tech/project/clogistic
+
 Logistic regression with bound and linear constraints. L1, L2 and Elastic-Net regularization.
 
 
