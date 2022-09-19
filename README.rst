@@ -170,7 +170,7 @@ If we choose ``penalty="l2"`` or ``penalty="none"``, the L-BFGS-B solver can han
 Elastic-Net with bounds and constraints
 ---------------------------------------
 
-If ``solver="ecos"``, linear constraints are supported. First, we solve the
+If ``solver="ecos"`` or ``solver="scs"``, linear constraints are supported. First, we solve the
 unconstrained problem:
 
 .. code-block:: python
