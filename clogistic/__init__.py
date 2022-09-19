@@ -1,5 +1,6 @@
+from ._version import __version__
 from .clogistic import LogisticRegression
 
-__version__ = "0.1.0"
 
-__all__ = ['LogisticRegression']
+__all__ = ['__version__',
+           'LogisticRegression']

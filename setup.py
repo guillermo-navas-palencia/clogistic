@@ -24,9 +24,15 @@ install_requires = [
 ]
 
 
+# Read version file
+version_info = {}
+with open("clogistic/_version.py") as f:
+    exec(f.read(), version_info)
+
+
 setup(
     name='clogistic',
-    version='0.1.0',
+    version=version_info['__version__'],
     description="Constrained Logistic Regression",
     long_description=long_description,
     author="Guillermo Navas-Palencia",

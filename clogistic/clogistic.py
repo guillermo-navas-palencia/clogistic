@@ -65,9 +65,9 @@ def _check_parameters(penalty, tol, C, fit_intercept, class_weight, solver,
             raise ValueError('Invalid value for class_weight. Allowed string '
                              'value is "balanced".')
 
-    if solver not in ("ecos", "lbfgs"):
+    if solver not in ("ecos", "lbfgs", "scs"):
         raise ValueError('Invalid value for solver. Allowed string '
-                         'values are "ecos" and "lbfgs".')
+                         'values are "ecos", "lbfgs" and "scs".')
 
     if not isinstance(max_iter, numbers.Number) or max_iter < 0:
         raise ValueError("max_iter must be positive; got {}.".format(max_iter))
@@ -85,10 +85,12 @@ def _check_solver(solver, penalty, bounds, constraints, warm_start):
         if penalty in ("l1", "elasticnet") and bounds is not None:
             raise ValueError('Solver "lbfgs" does not support bound '
                              'constraints with penalty "l1" and '
-                             '"elasticnet"; choose "ecos" solver.')
+                             '"elasticnet"; choose either "ecos" or "scs" '
+                             'solver.')
 
         if constraints is not None:
-            raise ValueError('Only "ecos" solver supports linear constraints.')
+            raise ValueError('"lbfgs" solver does not  supports linear '
+                             'constraints.')
 
         if penalty in ("l1", "elasticnet") and warm_start:
             raise ValueError('Solver "lbfgs" does not support warm start with '
@@ -269,9 +271,9 @@ def _fit_lbfgs(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
     return coef_, intercept_
 
 
-def _fit_ecos(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
-              warm_start_coef, verbose, X, y, sample_weight, bounds=None,
-              constraints=None):
+def _fit_cvxpy(solver, penalty, tol, C, fit_intercept, max_iter, l1_ratio,
+               warm_start_coef, verbose, X, y, sample_weight, bounds=None,
+               constraints=None):
 
     m, n = X.shape
 
@@ -343,8 +345,14 @@ def _fit_ecos(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
 
     obj = cp.Maximize(log_likelihood - penalty)
     problem = cp.Problem(obj, cons)
-    problem.solve(max_iters=max_iter, verbose=verbose, abstol=tol,
-                  warm_start=warm_start)
+
+    if solver == "ecos":
+        solve_options = {'solver': cp.ECOS, 'abstol': tol}
+    elif solver == "scs":
+        solve_options = {'solver': cp.SCS, 'eps': tol}
+
+    problem.solve(max_iters=max_iter, verbose=verbose, warm_start=warm_start,
+                  **solve_options)
 
     if fit_intercept:
         intercept_ = beta.value[-1]
@@ -362,12 +370,12 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     Constrained Logistic Regression (aka logit, MaxEnt) classifier.
 
     This class implements regularized logistic regression supported bound
-    and linear constraints using the 'ecos' and 'lbfgs' solvers.
+    and linear constraints using the 'ecos', 'scs' and 'lbfgs' solvers.
 
     All solvers support only L1, L2 and Elastic-Net regularization or no
     regularization. The 'lbfgs' solver supports bound constraints for L2
-    regularization. The 'ecos' solver supports bound constraints and linear
-    constraints for all regularizations.
+    regularization. The 'ecos' and 'scs' solver support bound constraints and
+    linear constraints for all regularizations.
 
     Parameters
     ----------
@@ -399,14 +407,15 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-    solver : {'ecos', 'lbfgs'}, default='lbfgs'
+    solver : {'ecos', 'lbfgs', 'scs'}, default='ecos'
         Algorithm/solver to use in the optimization problem.
 
         - Unconstrained 'lbfgs' handles all regularizations.
         - Bound constrainted 'lbfgs' handles L2 or no penalty.
-        - For other cases, use 'ecos'.
+        - For other cases, use 'ecos' or 'scs'.
 
-        Note that 'ecos' uses the general-purpose solver ECOS via CVXPY.
+        Note that 'ecos' and 'scs' are general-purpose solvers called via
+        CVXPY.
 
     max_iter : int, default=100
         Maximum number of iterations taken for the solvers to converge.
@@ -520,11 +529,12 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                                         self.intercept_[:, np.newaxis],
                                         axis=1)
 
-        if self.solver == "ecos":
-            coef_, intercept_ = _fit_ecos(
-                self.penalty, self.tol, self.C, self.fit_intercept,
-                self.max_iter, self.l1_ratio, warm_start_coef, self.verbose,
-                X, y, sample_weight, bounds, constraints)
+        if self.solver in ("ecos", "scs"):
+            coef_, intercept_ = _fit_cvxpy(
+                self.solver, self.penalty, self.tol, self.C,
+                self.fit_intercept, self.max_iter, self.l1_ratio,
+                warm_start_coef, self.verbose, X, y, sample_weight, bounds,
+                constraints)
         else:
             coef_, intercept_ = _fit_lbfgs(
                 self.penalty, self.tol, self.C, self.fit_intercept,
