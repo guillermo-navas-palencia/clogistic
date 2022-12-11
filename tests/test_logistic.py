@@ -47,8 +47,9 @@ def test_parameters():
 def test_solver():
     X, y = load_breast_cancer(return_X_y=True)
 
-    clfs = [LogisticRegression(solver="lbfgs", penalty="l1", warm_start=True),
-            LogisticRegression(solver="lbfgs", penalty="elasticnet",
+    clfs = [LogisticRegression(solver="L-BFGS-B", penalty="l1",
+                               warm_start=True),
+            LogisticRegression(solver="L-BFGS-B", penalty="elasticnet",
                                warm_start=True)]
     for clf in clfs:
         with raises(ValueError):
@@ -58,8 +59,8 @@ def test_solver():
     ub = np.r_[np.zeros(X.shape[1]), np.inf]
     bounds = Bounds(lb, ub)
 
-    clfs = [LogisticRegression(solver="lbfgs", penalty="l1"),
-            LogisticRegression(solver="lbfgs", penalty="elasticnet")]
+    clfs = [LogisticRegression(solver="L-BFGS-B", penalty="l1"),
+            LogisticRegression(solver="L-BFGS-B", penalty="elasticnet")]
 
     for clf in clfs:
         with raises(ValueError):
@@ -151,7 +152,7 @@ def test_predict_breast_cancer():
 
     # Test that all solvers with all regularizations score (>0.93) for the
     # training data
-    for solver in ("lbfgs", "ecos", "scs"):
+    for solver in ("L-BFGS-B", "ecos", "scs"):
         for penalty in ("none", "l1", "l2", "elasticnet"):
             if penalty == "elasticnet":
                 clf = LogisticRegression(solver=solver, penalty=penalty,
@@ -178,7 +179,7 @@ def test_predict_breast_cancer_no_intercept():
 
     # Test that all solvers with all regularizations score (>0.93) for the
     # training data without intercept
-    for solver in ("lbfgs", "ecos"):
+    for solver in ("L-BFGS-B", "ecos"):
         for penalty in ("none", "l1", "l2", "elasticnet"):
             if penalty == "elasticnet":
                 clf = LogisticRegression(solver=solver, penalty=penalty,
@@ -240,12 +241,12 @@ def test_predict_breast_cancer_bounds_constraints():
 def test_warm_start():
     X, y = load_breast_cancer(return_X_y=True)
 
-    clf_l2_lbfgs = LogisticRegression(solver="lbfgs", penalty="l2",
-                                      warm_start=True)
+    clf_l2_lbfgsb = LogisticRegression(solver="L-BFGS-B", penalty="l2",
+                                       warm_start=True)
     clf_l2_ecos = LogisticRegression(solver="ecos", penalty="l2",
                                      warm_start=True)
 
-    for clf in (clf_l2_lbfgs, clf_l2_ecos):
+    for clf in (clf_l2_lbfgsb, clf_l2_ecos):
         clf.fit(X, y)
         score1 = clf.score(X, y)
         clf.fit(X, y)
@@ -257,12 +258,12 @@ def test_warm_start():
 def test_class_weight():
     X, y = load_breast_cancer(return_X_y=True)
 
-    clf_l2_lbfgs = LogisticRegression(solver="lbfgs", penalty="l2",
-                                      class_weight="balanced")
+    clf_l2_lbfgsb = LogisticRegression(solver="L-BFGS-B", penalty="l2",
+                                       class_weight="balanced")
     clf_l2_ecos = LogisticRegression(solver="ecos", penalty="l2",
                                      class_weight={0: 1, 1: 5})
 
-    for clf in (clf_l2_lbfgs, clf_l2_ecos):
+    for clf in (clf_l2_lbfgsb, clf_l2_ecos):
         clf.fit(X, y)
         pred = clf.predict(X)
         assert np.mean(pred == y) > 0.93

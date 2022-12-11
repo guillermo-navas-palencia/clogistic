@@ -65,9 +65,9 @@ def _check_parameters(penalty, tol, C, fit_intercept, class_weight, solver,
             raise ValueError('Invalid value for class_weight. Allowed string '
                              'value is "balanced".')
 
-    if solver not in ("ecos", "lbfgs", "scs"):
+    if solver not in ("ecos", "L-BFGS-B", "scs"):
         raise ValueError('Invalid value for solver. Allowed string '
-                         'values are "ecos", "lbfgs" and "scs".')
+                         'values are "ecos", "L-BFGS-B" and "scs".')
 
     if not isinstance(max_iter, numbers.Number) or max_iter < 0:
         raise ValueError("max_iter must be positive; got {}.".format(max_iter))
@@ -81,20 +81,20 @@ def _check_parameters(penalty, tol, C, fit_intercept, class_weight, solver,
 
 
 def _check_solver(solver, penalty, bounds, constraints, warm_start):
-    if solver == "lbfgs":
+    if solver == "L-BFGS-B":
         if penalty in ("l1", "elasticnet") and bounds is not None:
-            raise ValueError('Solver "lbfgs" does not support bound '
+            raise ValueError('Solver "L-BFGS-B" does not support bound '
                              'constraints with penalty "l1" and '
                              '"elasticnet"; choose either "ecos" or "scs" '
                              'solver.')
 
         if constraints is not None:
-            raise ValueError('"lbfgs" solver does not  supports linear '
+            raise ValueError('"L-BFGS-B" solver does not  supports linear '
                              'constraints.')
 
         if penalty in ("l1", "elasticnet") and warm_start:
-            raise ValueError('Solver "lbfgs" does not support warm start with '
-                             '"l1" and "elasticnet" regularization.')
+            raise ValueError('Solver "L-BFGS-B" does not support warm start '
+                             'with "l1" and "elasticnet" regularization.')
 
 
 def _check_X_y(X, y):
@@ -226,8 +226,8 @@ def _logistic_loss_and_grad(w, X, y, alpha, penalty, fit_intercept,
     return out, grad
 
 
-def _fit_lbfgs(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
-               warm_start_coef, verbose, X, y, sample_weight, bounds=None):
+def _fit_lbfgsb(penalty, tol, C, fit_intercept, max_iter, l1_ratio,
+                warm_start_coef, verbose, X, y, sample_weight, bounds=None):
 
     m, n = X.shape
 
@@ -370,17 +370,17 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     Constrained Logistic Regression (aka logit, MaxEnt) classifier.
 
     This class implements regularized logistic regression supported bound
-    and linear constraints using the 'ecos', 'scs' and 'lbfgs' solvers.
+    and linear constraints using the 'ecos', 'scs' and 'L-BFGS-B' solvers.
 
     All solvers support only L1, L2 and Elastic-Net regularization or no
-    regularization. The 'lbfgs' solver supports bound constraints for L2
+    regularization. The 'L-BFGS-B' solver supports bound constraints for L2
     regularization. The 'ecos' and 'scs' solver support bound constraints and
     linear constraints for all regularizations.
 
     Parameters
     ----------
     penalty : {'l1', 'l2', 'elasticnet', 'none'}, default='l2'
-        Used to specify the norm used in the penalization. The 'lbfgs',
+        Used to specify the norm used in the penalization. The 'L-BFGS-B',
         solver supports only 'l2' penalties if bounds are provided.
         If 'none', no regularization is applied.
 
@@ -407,11 +407,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-    solver : {'ecos', 'lbfgs', 'scs'}, default='ecos'
+    solver : {'ecos', 'L-BFGS-B', 'scs'}, default='ecos'
         Algorithm/solver to use in the optimization problem.
 
-        - Unconstrained 'lbfgs' handles all regularizations.
-        - Bound constrainted 'lbfgs' handles L2 or no penalty.
+        - Unconstrained 'L-BFGS-B' handles all regularizations.
+        - Bound constrainted 'L-BFGS-B' handles L2 or no penalty.
         - For other cases, use 'ecos' or 'scs'.
 
         Note that 'ecos' and 'scs' are general-purpose solvers called via
@@ -451,7 +451,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     L-BFGS-B -- Software for Large-scale Bound-constrained Optimization
         Ciyou Zhu, Richard Byrd, Jorge Nocedal and Jose Luis Morales.
-        http://users.iems.northwestern.edu/~nocedal/lbfgsb.html
+        http://users.iems.northwestern.edu/~nocedal/L-BFGS-Bb.html
     """
     def __init__(self, penalty="l2", tol=1e-4, C=1.0, fit_intercept=True,
                  class_weight=None, solver="ecos", max_iter=100, l1_ratio=None,
@@ -536,7 +536,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                 warm_start_coef, self.verbose, X, y, sample_weight, bounds,
                 constraints)
         else:
-            coef_, intercept_ = _fit_lbfgs(
+            coef_, intercept_ = _fit_lbfgsb(
                 self.penalty, self.tol, self.C, self.fit_intercept,
                 self.max_iter, self.l1_ratio, warm_start_coef, self.verbose,
                 X, y, sample_weight, bounds)
