@@ -320,7 +320,7 @@ def _fit_cvxpy(solver, penalty, tol, C, fit_intercept, max_iter, l1_ratio,
             cons.append(lb[mask_lb] <= Abeta[mask_lb])
 
         if np.any(mask_ub):
-            cons.append(Abeta[mask_ub] >= ub[mask_ub])
+            cons.append(Abeta[mask_ub] <= ub[mask_ub])
 
     # Regularization
     w = beta
