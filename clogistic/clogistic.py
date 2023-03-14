@@ -565,7 +565,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in ``self.classes_``.
         """
-        check_is_fitted(self, [])
+        check_is_fitted(self, ['coef_'])
 
         proba = np.empty((X.shape[0], 2))
         p0 = expit(-self.decision_function(X))
