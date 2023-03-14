@@ -20,8 +20,8 @@ from scipy.optimize import Bounds, LinearConstraint, minimize
 from scipy.special import expit
 
 from sklearn.base import BaseEstimator
-from sklearn.linear_model._base import LinearClassifierMixin
-from sklearn.linear_model._base import SparseCoefMixin
+from sklearn.linear_model.base import LinearClassifierMixin
+from sklearn.linear_model.base import SparseCoefMixin
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_consistent_length
 from sklearn.utils import compute_class_weight
@@ -29,7 +29,7 @@ from sklearn.utils.extmath import log_logistic, safe_sparse_dot
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.validation import check_X_y
-from sklearn.utils.validation import _check_sample_weight
+from sklearn.cluster.k_means_ import _check_sample_weight
 
 
 def _check_parameters(penalty, tol, C, fit_intercept, class_weight, solver,
@@ -512,7 +512,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if constraints is not None:
             _check_constraints(constraints, n_features, self.fit_intercept)
 
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        sample_weight = _check_sample_weight(X, sample_weight)
 
         if self.class_weight is not None:
             le = LabelEncoder()
@@ -565,7 +565,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in ``self.classes_``.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, [])
 
         proba = np.empty((X.shape[0], 2))
         p0 = expit(-self.decision_function(X))
